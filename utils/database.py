@@ -1,3 +1,5 @@
+import logging
+import asyncio
 
 from loader import messages_collection, admin_collection, users_collection, posts_collection, DEFAULT_MESSAGES, bot
 from datetime import datetime, timedelta
@@ -56,7 +58,8 @@ async def save_user(user, referrer_id=None):
         'posts_sent': [],
         'game_wins': 0,
         'game_losses': 0,
-        'game_draws': 0
+        'game_draws': 0,
+        'daily_games': 0
     }
 
     users_collection.insert_one(user_data)
@@ -96,5 +99,31 @@ def get_all_ad_posts():
     return list(posts_collection.find().sort('created_at', -1))
 
 
+async def clear_posts_sent():
+    """Очищает posts_sent у всех пользователей. Блокирует event loop — но ненадолго."""
+    try:
+        result = users_collection.update_many(
+            {"posts_sent": {"$exists": True}},
+            {"$set": {"posts_sent": []}}
+        )
+        logging.log(f"[Scheduler] Очищено posts_sent у {result.modified_count} пользователей.")
+    except Exception as e:
+        logging.error(f"[Scheduler] Ошибка: {e}")
 
+
+async def daily_scheduler():
+    """Запускает очистку каждый день в 00:00 по UTC."""
+    while True:
+        now = datetime.now()
+        # Следующая полночь UTC
+        next_midnight = now.replace(hour=16, minute=32, second=0, microsecond=0)
+        if now >= next_midnight:
+            next_midnight += timedelta(days=1)
+
+        sleep_time = (next_midnight - now).total_seconds()
+        print(f"[Scheduler] Следующая очистка в {next_midnight} (через {int(sleep_time)} сек)")
+        await asyncio.sleep(sleep_time)
+
+        # Выполняем синхронную операцию напрямую
+        await clear_posts_sent()  # ← внутри — прямой вызов pymongo
 

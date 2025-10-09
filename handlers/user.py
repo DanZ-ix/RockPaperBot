@@ -37,13 +37,18 @@ async def start_command(message: types.Message, state: FSMContext):
 
 @dp.message_handler(lambda message: message.text.lower() == 'да', state=UserStates.AWAITING_READY)
 async def ready_yes(message: types.Message, state: FSMContext):
+    user_data = get_user(message.from_user.id)
+    if len(user_data.get('posts_sent', [])) > 5:
+        await message.answer(get_message('no_games_left'))
+        return
+
     users_collection.update_one(
         {'user_id': str(message.from_user.id)},
         {'$set': {'is_ready': True, 'is_playing': True}}
     )
     update_user_activity(message.from_user.id, is_playing=True)
 
-    await message.answer("Отлично! Давайте сыграем в камень-ножницы-бумага!\nПобедишь, получишь вакансию", reply_markup=get_game_keyboard())
+    await message.answer(get_message('lets_play'), reply_markup=get_game_keyboard())
     await UserStates.PLAYING_GAME.set()
 
 
@@ -58,6 +63,46 @@ async def ready_no(message: types.Message, state: FSMContext):
     await message.answer("Хорошо, мы напомним вам позже!", reply_markup=get_main_keyboard())
     await send_all_saved_messages_sequentially(message.from_user.id)
     await state.finish()
+
+
+@dp.message_handler(lambda message: message.text.lower() in [rock, scissors, paper],
+                    state=UserStates.PLAYING_GAME)
+async def play_game(message: types.Message, state: FSMContext):
+    user_choice = message.text.lower()
+    bot_choice = random.choice(GAME_CHOICES)
+
+    if user_choice == bot_choice:
+        result_text = get_message('game_draw')
+        users_collection.update_one({'user_id': str(message.from_user.id)}, {'$inc': {'game_draws': 1}})
+    elif GAME_RULES[user_choice] == bot_choice:
+        result_text = get_message('game_win')
+        users_collection.update_one({'user_id': str(message.from_user.id)}, {'$inc': {'game_wins': 1}})
+    else:
+        result_text = get_message('game_lose')
+        users_collection.update_one({'user_id': str(message.from_user.id)}, {'$inc': {'game_losses': 1}})
+
+    update_user_activity(message.from_user.id, is_playing=True)
+
+    await message.answer(f"Вы выбрали: {user_choice}\nБот выбрал: {bot_choice}\n{result_text}")
+
+    ad_posts = get_all_ad_posts()
+    if ad_posts:
+        await send_random_ad_post(message.from_user.id)
+
+    await message.answer("Хотите сыграть еще раз?", reply_markup=get_ready_keyboard())
+    await UserStates.AWAITING_READY.set()
+
+
+@dp.message_handler(lambda message: message.text == 'Удвой свой заработок', state='*')
+async def double_earnings(message: types.Message):
+    update_user_activity(message.from_user.id)
+    await message.answer(
+        get_message('double_offer'),
+        reply_markup=InlineKeyboardMarkup().add(
+            InlineKeyboardButton('Подписаться', url=get_message('channel_link'))
+        )
+    )
+
 
 
 async def send_all_saved_messages_sequentially(user_id: str):
@@ -135,44 +180,5 @@ async def send_random_ad_post(user_id):
 
 
 
-@dp.message_handler(lambda message: message.text.lower() in [rock, scissors, paper],
-                    state=UserStates.PLAYING_GAME)
-async def play_game(message: types.Message, state: FSMContext):
-    user_choice = message.text.lower()
-    bot_choice = random.choice(GAME_CHOICES)
 
-    if user_choice == bot_choice:
-        result = 'draw'
-        result_text = get_message('game_draw')
-        users_collection.update_one({'user_id': str(message.from_user.id)}, {'$inc': {'game_draws': 1}})
-    elif GAME_RULES[user_choice] == bot_choice:
-        result = 'win'
-        result_text = get_message('game_win')
-        users_collection.update_one({'user_id': str(message.from_user.id)}, {'$inc': {'game_wins': 1}})
-    else:
-        result = 'lose'
-        result_text = get_message('game_lose')
-        users_collection.update_one({'user_id': str(message.from_user.id)}, {'$inc': {'game_losses': 1}})
-
-    update_user_activity(message.from_user.id, is_playing=True)
-
-    await message.answer(f"Вы выбрали: {user_choice}\nБот выбрал: {bot_choice}\n{result_text}")
-
-    ad_posts = get_all_ad_posts()
-    if ad_posts:
-        await send_random_ad_post(message.from_user.id)
-
-    await message.answer("Хотите сыграть еще раз?", reply_markup=get_ready_keyboard())
-    await UserStates.AWAITING_READY.set()
-
-
-@dp.message_handler(lambda message: message.text == 'Удвой свой заработок')
-async def double_earnings(message: types.Message):
-    update_user_activity(message.from_user.id)
-    await message.answer(
-        get_message('double_offer'),
-        reply_markup=InlineKeyboardMarkup().add(
-            InlineKeyboardButton('Подписаться', url=get_message('channel_link'))
-        )
-    )
 

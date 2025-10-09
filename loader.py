@@ -54,7 +54,9 @@ DEFAULT_MESSAGES = {
     'game_draw': 'Ничья! Но мы считаем это победой!',
     'reminder': 'Не забывайте про заработок!',
     'double_offer': 'Подпишитесь на наш канал и удвойте свой заработок!',
-    'channel_link': 'https://t.me/your_channel'
+    'channel_link': 'https://t.me/your_channel',
+    'no_games_left': 'Больше нельзя играть сегодня, приходи завтра',
+    'lets_play': 'Отлично! Давайте сыграем в камень-ножницы-бумага!\nПобедишь, получишь вакансию'
 }
 
 rock = game_choices_collection.find_one({"name": "rock"}).get("value")

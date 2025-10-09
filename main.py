@@ -3,11 +3,12 @@
 
 from aiogram.utils import executor
 from handlers import dp
-from utils.database import init_messages
+from utils.database import init_messages, daily_scheduler
 
 
 async def on_startup(dp):
     init_messages()
+    await daily_scheduler()
 
 
 if __name__ == '__main__':

@@ -1,12 +1,12 @@
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from loader import rock, paper, scissors
-from datetime import datetime, timedelta
 
 
 def get_ready_keyboard():
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
     keyboard.add(KeyboardButton('Да'), KeyboardButton('Нет'))
+    keyboard.add(KeyboardButton('Удвой свой заработок'))
     return keyboard
 
 def get_game_keyboard():

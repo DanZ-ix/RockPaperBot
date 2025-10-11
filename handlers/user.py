@@ -38,7 +38,7 @@ async def start_command(message: types.Message, state: FSMContext):
 @dp.message_handler(lambda message: message.text.lower() == 'да', state=UserStates.AWAITING_READY)
 async def ready_yes(message: types.Message, state: FSMContext):
     user_data = get_user(message.from_user.id)
-    if len(user_data.get('posts_sent', [])) > 5:
+    if len(user_data.get('posts_sent', [])) > 4:
         await message.answer(get_message('no_games_left'))
         return
 

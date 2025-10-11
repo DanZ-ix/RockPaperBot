@@ -99,7 +99,7 @@ def get_all_ad_posts():
     return list(posts_collection.find().sort('created_at', -1))
 
 
-async def clear_posts_sent():
+def clear_posts_sent():
     """Очищает posts_sent у всех пользователей. Блокирует event loop — но ненадолго."""
     try:
         result = users_collection.update_many(
@@ -116,7 +116,7 @@ async def daily_scheduler():
     while True:
         now = datetime.now()
         # Следующая полночь UTC
-        next_midnight = now.replace(hour=16, minute=32, second=0, microsecond=0)
+        next_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
         if now >= next_midnight:
             next_midnight += timedelta(days=1)
 
@@ -125,5 +125,5 @@ async def daily_scheduler():
         await asyncio.sleep(sleep_time)
 
         # Выполняем синхронную операцию напрямую
-        await clear_posts_sent()  # ← внутри — прямой вызов pymongo
+        clear_posts_sent()  # ← внутри — прямой вызов pymongo
 

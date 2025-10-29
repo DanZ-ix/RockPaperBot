@@ -208,14 +208,24 @@ async def delete_post(message: types.Message, state: FSMContext):
 
 @dp.message_handler(lambda message: message.text == '🔗 Отслеживать ссылки', state='*')
 async def track_links(message: types.Message):
-    if not is_admin(message.from_user.id): return
+    if not is_admin(message.from_user.id):
+        return
 
     pipeline = [
         {"$match": {"referrer_id": {"$exists": True, "$ne": None}}},
         {"$group": {
             "_id": "$referrer_id",
             "count": {"$sum": 1},
-            "users": {"$push": "$user_id"}
+            "total_games": {
+                "$sum": {
+                    "$add": [
+                        {"$ifNull": ["$game_wins", 0]},
+                        {"$ifNull": ["$game_losses", 0]},
+                        {"$ifNull": ["$game_draws", 0]}
+                    ]
+                }
+            },
+            "user_ids": {"$push": "$user_id"}  # опционально, если нужно
         }}
     ]
 
@@ -228,8 +238,10 @@ async def track_links(message: types.Message):
     for stat in ref_stats:
         referrer = get_user(stat['_id'])
         name = f"@{referrer.get('username', 'id' + str(stat['_id']))}" if referrer else f"id{stat['_id']}"
-        text += f"👤 {name}: привлек {stat['count']} пользователей\n"
-        text += f"Ссылка: {referrer.get('referral_link', 'N/A') if referrer else 'N/A'}\n\n"
+        referral_link = referrer.get('referral_link', 'N/A') if referrer else 'N/A'
+        text += f"👤 {name}: привлёк {stat['count']} пользователей\n"
+        text += f"   Игр рефералов: {stat['total_games']}\n"
+        text += f"   Ссылка: {referral_link}\n\n"
 
     await message.answer(text)
 

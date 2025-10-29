@@ -44,21 +44,38 @@ async def export_database(message: types.Message):
 
 @dp.message_handler(lambda message: message.text == '📈 Реферальная статистика', state='*')
 async def referral_stats(message: types.Message):
-    if not is_admin(message.from_user.id): return
+    if not is_admin(message.from_user.id):
+        return
 
-    top_referrers = list(users_collection.find({'referral_count': {'$gt': 0}}).sort('referral_count', -1).limit(10))
+    top_referrers = list(
+        users_collection.find({'referral_count': {'$gt': 0}})
+        .sort('referral_count', -1)
+        .limit(10)
+    )
     if not top_referrers:
         await message.answer("Пока нет пользователей с рефералами")
         return
 
     stats_text = "🏆 Топ рефералов:\n\n"
-    for i, user in enumerate(top_referrers, 1):
-        stats_text += f"{i}. {user.get('first_name', 'Пользователь')} (@{user.get('username', 'нет')})\n"
-        stats_text += f"   Приглашено: {user.get('referral_count', 0)}\n"
-        stats_text += f"   Ссылка: {user.get('referral_link', '')}\n\n"
+    for i, referrer in enumerate(top_referrers, 1):
+        referrer_id = str(referrer['user_id'])
+
+        # Находим всех рефералов этого реферера
+        referrals = users_collection.find({'referrer_id': referrer_id})
+
+        total_games = 0
+        for ref in referrals:
+            wins = ref.get('game_wins', 0)
+            losses = ref.get('game_losses', 0)
+            draws = ref.get('game_draws', 0)
+            total_games += wins + losses + draws
+
+        stats_text += f"{i}. {referrer.get('first_name', 'Пользователь')} (@{referrer.get('username', 'нет')})\n"
+        stats_text += f"   Приглашено: {referrer.get('referral_count', 0)}\n"
+        stats_text += f"   Игр рефералов: {total_games}\n"
+        stats_text += f"   Ссылка: {referrer.get('referral_link', '')}\n\n"
 
     await message.answer(stats_text)
-
 
 @dp.message_handler(lambda message: message.text == '📝 Изменить сообщения', state='*')
 async def change_messages(message: types.Message):

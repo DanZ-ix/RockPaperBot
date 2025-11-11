@@ -11,6 +11,7 @@ from loader import dp, bot, UserStates, GAME_CHOICES, rock, scissors, paper, GAM
 from utils.database import save_user, update_user_activity, get_message, users_collection, posts_collection, get_user, \
     get_all_ad_posts
 from utils.keyboards import get_main_keyboard, get_ready_keyboard, get_game_keyboard
+from utils.posts import send_ad_post
 
 
 @dp.message_handler(commands=['start'], state='*')
@@ -127,38 +128,6 @@ async def send_all_saved_messages_sequentially(user_id: str):
 
 
 
-
-async def send_ad_post(ad_post, user_id):
-    try:
-        new_message = types.Message.to_object(ad_post)
-        if new_message.photo:
-            # Берём фото с наибольшим размером
-            file_json = sorted(new_message.photo, key=lambda d: d.file_size)[-1]
-            await bot.send_photo(
-                chat_id=user_id,
-                photo=file_json.file_id,
-                caption=new_message.caption,
-                caption_entities=new_message.caption_entities,
-                reply_markup=new_message.reply_markup
-            )
-        else:
-            # Отправляем как текстовое сообщение
-            await bot.send_message(
-                chat_id=user_id,
-                text=new_message.text,
-                entities=new_message.entities,
-                reply_markup=new_message.reply_markup,
-                disable_web_page_preview=True
-            )
-        users_collection.update_one(
-            {'user_id': str(user_id)},
-            {'$addToSet': {'posts_sent': str(ad_post['_id'])}}
-        )
-
-    except Exception as e:
-        logging.error(f"Ошибка при отправке поста {ad_post.get('_id')} пользователю {user_id}: {e}")
-
-
 async def send_random_ad_post(user_id):
     try:
         user_data = get_user(user_id)
@@ -172,6 +141,10 @@ async def send_random_ad_post(user_id):
         if available_posts:
             random_post = random.choice(available_posts)
             await send_ad_post(random_post, user_id)
+            users_collection.update_one(
+                {'user_id': str(user_id)},
+                {'$addToSet': {'posts_sent': str(random_post['_id'])}}
+            )
         else:
             # Опционально: можно ничего не отправлять или отправить заглушку
             return "STOP"

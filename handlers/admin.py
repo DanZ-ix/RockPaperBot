@@ -1,18 +1,18 @@
 
 import asyncio
 import os
-import logging
 from datetime import datetime
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from bson import ObjectId
 
-from loader import dp, UserStates, AdminStates, messages_collection, bot
+from loader import dp, UserStates, AdminStates, messages_collection
 
 from utils.database import users_collection, is_admin, posts_collection, get_user, \
     get_all_ad_posts, get_messages, save_ad_post
 from utils.keyboards import get_main_keyboard, get_admin_keyboard
+from utils.posts import send_ad_post
 
 
 
@@ -253,41 +253,6 @@ async def back_to_main(message: types.Message):
     if is_admin(message.from_user.id):
         await message.answer("Главное меню", reply_markup=get_main_keyboard())
 
-
-
-async def send_ad_post(ad_post, user_id):
-    try:
-        new_message = types.Message.to_object(ad_post)
-        if new_message.photo:
-            # Берём фото с наибольшим размером
-            file_json = sorted(new_message.photo, key=lambda d: d.file_size)[-1]
-            await bot.send_photo(
-                chat_id=user_id,
-                photo=file_json.file_id,
-                caption=new_message.caption,
-                caption_entities=new_message.caption_entities,
-                reply_markup=new_message.reply_markup
-            )
-        elif new_message.video:
-            await bot.send_video(
-                chat_id=user_id,
-                video=new_message.video.file_id,
-                caption=new_message.caption,
-                caption_entities=new_message.caption_entities,
-                reply_markup=new_message.reply_markup
-            )
-        else:
-            # Отправляем как текстовое сообщение
-            await bot.send_message(
-                chat_id=user_id,
-                text=new_message.text,
-                entities=new_message.entities,
-                reply_markup=new_message.reply_markup,
-                disable_web_page_preview=True
-            )
-
-    except Exception as e:
-        logging.error(f"Ошибка при отправке поста {ad_post.get('_id')} пользователю {user_id}: {e}")
 
 
 

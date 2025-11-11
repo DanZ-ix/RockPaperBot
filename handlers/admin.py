@@ -268,6 +268,14 @@ async def send_ad_post(ad_post, user_id):
                 caption_entities=new_message.caption_entities,
                 reply_markup=new_message.reply_markup
             )
+        elif new_message.video:
+            await bot.send_video(
+                chat_id=user_id,
+                video=new_message.video.file_id,
+                caption=new_message.caption,
+                caption_entities=new_message.caption_entities,
+                reply_markup=new_message.reply_markup
+            )
         else:
             # Отправляем как текстовое сообщение
             await bot.send_message(

@@ -1,13 +1,14 @@
 
 import asyncio
 import os
+import logging
 from datetime import datetime
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from bson import ObjectId
 
-from loader import dp, UserStates, AdminStates, messages_collection
+from loader import dp, UserStates, AdminStates, messages_collection, bot
 
 from utils.database import users_collection, is_admin, posts_collection, get_user, \
     get_all_ad_posts, get_messages, save_ad_post
@@ -75,7 +76,7 @@ async def referral_stats(message: types.Message):
         stats_text += f"   Игр рефералов: {total_games}\n"
         stats_text += f"   Ссылка: {referrer.get('referral_link', '')}\n\n"
 
-    await message.answer(stats_text)
+    await message.answer(stats_text, disable_web_page_preview=True)
 
 @dp.message_handler(lambda message: message.text == '📝 Изменить сообщения', state='*')
 async def change_messages(message: types.Message):
@@ -154,9 +155,10 @@ async def list_ad_posts(message: types.Message):
         return
 
     for i, post in enumerate(posts, 1):
-        preview = (post.get('caption') or post.get('text') or 'Без текста')[:100]
-        info = f"📌 Пост #{i}\nID: {post['_id']}\n{preview}..."
-        await message.answer(info)
+        info = f"📌 Пост #{i}\nID: `{post['_id']}`"
+        await message.answer(info, parse_mode='Markdown')
+        await send_ad_post(post, message.from_user.id)
+
         await asyncio.sleep(0.1)  # чтобы не спамить
 
 
@@ -243,10 +245,41 @@ async def track_links(message: types.Message):
         text += f"   Игр рефералов: {stat['total_games']}\n"
         text += f"   Ссылка: {referral_link}\n\n"
 
-    await message.answer(text)
+    await message.answer(text, disable_web_page_preview=True)
 
 
 @dp.message_handler(lambda message: message.text == '⬅️ Назад', state='*')
 async def back_to_main(message: types.Message):
     if is_admin(message.from_user.id):
         await message.answer("Главное меню", reply_markup=get_main_keyboard())
+
+
+
+async def send_ad_post(ad_post, user_id):
+    try:
+        new_message = types.Message.to_object(ad_post)
+        if new_message.photo:
+            # Берём фото с наибольшим размером
+            file_json = sorted(new_message.photo, key=lambda d: d.file_size)[-1]
+            await bot.send_photo(
+                chat_id=user_id,
+                photo=file_json.file_id,
+                caption=new_message.caption,
+                caption_entities=new_message.caption_entities,
+                reply_markup=new_message.reply_markup
+            )
+        else:
+            # Отправляем как текстовое сообщение
+            await bot.send_message(
+                chat_id=user_id,
+                text=new_message.text,
+                entities=new_message.entities,
+                reply_markup=new_message.reply_markup,
+                disable_web_page_preview=True
+            )
+
+    except Exception as e:
+        logging.error(f"Ошибка при отправке поста {ad_post.get('_id')} пользователю {user_id}: {e}")
+
+
+

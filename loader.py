@@ -5,11 +5,11 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 import logging
 from pymongo import MongoClient
 
-from utils.configs import bot_token
+from utils.configs import bot_token, db_name
 
 
 MONGO_URI = 'mongodb://localhost:27017/'
-DATABASE_NAME = 'RockPaperDB'
+DATABASE_NAME = db_name
 
 
 
@@ -59,9 +59,9 @@ DEFAULT_MESSAGES = {
     'lets_play': 'Отлично! Давайте сыграем в камень-ножницы-бумага!\nПобедишь, получишь вакансию'
 }
 
-rock = game_choices_collection.find_one({"name": "rock"}).get("value")
-paper = game_choices_collection.find_one({"name": "paper"}).get("value")
-scissors = game_choices_collection.find_one({"name": "scissors"}).get("value")
+rock = (game_choices_collection.find_one({"name": "rock"}) or {}).get("value", "Камень")
+paper = (game_choices_collection.find_one({"name": "paper"}) or {}).get("value", "Бумага")
+scissors = (game_choices_collection.find_one({"name": "scissors"}) or {}).get("value", "Ножиницы")
 
 # Игровые элементы
 GAME_CHOICES = [rock, scissors, paper]

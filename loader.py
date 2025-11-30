@@ -59,9 +59,9 @@ DEFAULT_MESSAGES = {
     'lets_play': 'Отлично! Давайте сыграем в камень-ножницы-бумага!\nПобедишь, получишь вакансию'
 }
 
-rock = (game_choices_collection.find_one({"name": "rock"}) or {}).get("value", "Камень")
-paper = (game_choices_collection.find_one({"name": "paper"}) or {}).get("value", "Бумага")
-scissors = (game_choices_collection.find_one({"name": "scissors"}) or {}).get("value", "Ножиницы")
+rock = game_choices_collection.find_one({"name": "rock"})
+paper = game_choices_collection.find_one({"name": "paper"})
+scissors = game_choices_collection.find_one({"name": "scissors"})
 
 # Игровые элементы
 GAME_CHOICES = [rock, scissors, paper]

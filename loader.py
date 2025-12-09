@@ -62,9 +62,9 @@ DEFAULT_MESSAGES = {
     'second_const_button': 'Доступ к быстрому VPN'
 }
 
-rock = game_choices_collection.find_one({"name": "rock"}).get("value")
-paper = game_choices_collection.find_one({"name": "paper"}).get("value")
-scissors = game_choices_collection.find_one({"name": "scissors"}).get("value")
+rock = (game_choices_collection.find_one({"name": "rock"}) or {}).get("value", "Камень")
+paper = (game_choices_collection.find_one({"name": "paper"}) or {}).get("value", "Бумага")
+scissors = (game_choices_collection.find_one({"name": "scissors"}) or {}).get("value", "Ножницы")
 
 # Игровые элементы
 GAME_CHOICES = [rock, scissors, paper]

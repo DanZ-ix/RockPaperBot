@@ -2,7 +2,7 @@ import logging
 import asyncio
 
 from loader import messages_collection, admin_collection, users_collection, posts_collection, DEFAULT_MESSAGES, bot, \
-    saved_messages_collection
+    saved_messages_collection, game_choices_collection
 from datetime import datetime, timedelta
 
 
@@ -20,6 +20,15 @@ def init_messages():
         existing_message = messages_collection.find_one({'key': key})
         if not existing_message:
             messages_collection.insert_one({'key': key, 'text': text})
+    default_choices = [
+        {"name": "rock", "value": "Камень"},
+        {"name": "paper", "value": "Бумага"},
+        {"name": "scissors", "value": "Ножницы"},
+    ]
+    for choice in default_choices:
+        existing_choice = game_choices_collection.find_one({"name": choice["name"]})
+        if not existing_choice:
+            game_choices_collection.insert_one(choice)
 
 
 def get_message(key):
@@ -100,7 +109,7 @@ def get_all_ad_posts():
     return list(posts_collection.find().sort('created_at', -1))
 
 
-def get_post_by_key(key):
+def get_saved_message_by_key(key):
     return saved_messages_collection.find_one({'key': key})
 
 

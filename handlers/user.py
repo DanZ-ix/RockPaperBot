@@ -66,10 +66,10 @@ async def ready_no(message: types.Message, state: FSMContext):
     await state.finish()
 
 
-@dp.message_handler(lambda message: message.text.lower() in [rock, scissors, paper],
+@dp.message_handler(lambda message: message.text in [rock, scissors, paper],
                     state=UserStates.PLAYING_GAME)
 async def play_game(message: types.Message, state: FSMContext):
-    user_choice = message.text.lower()
+    user_choice = message.text
     bot_choice = random.choice(GAME_CHOICES)
 
     if user_choice == bot_choice:

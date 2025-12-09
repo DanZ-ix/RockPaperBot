@@ -9,7 +9,7 @@ from aiogram.dispatcher import FSMContext
 from loader import dp, bot, UserStates, GAME_CHOICES, rock, scissors, paper, GAME_RULES
 
 from utils.database import save_user, update_user_activity, get_message, users_collection, posts_collection, get_user, \
-    get_all_ad_posts
+    get_all_ad_posts, get_post_by_key
 from utils.keyboards import get_main_keyboard, get_ready_keyboard, get_game_keyboard
 from utils.posts import send_ad_post
 
@@ -94,7 +94,7 @@ async def play_game(message: types.Message, state: FSMContext):
     await UserStates.AWAITING_READY.set()
 
 
-@dp.message_handler(lambda message: message.text == 'Удвой свой заработок', state='*')
+@dp.message_handler(lambda message: message.text == get_message('first_const_button'), state='*')
 async def double_earnings(message: types.Message):
     update_user_activity(message.from_user.id)
     await message.answer(
@@ -104,6 +104,12 @@ async def double_earnings(message: types.Message):
         )
     )
 
+@dp.message_handler(lambda message: message.text == get_message('second_const_button'), state='*')
+async def second_button(message: types.Message):
+    update_user_activity(message.from_user.id)
+
+    post = get_post_by_key('second_const_button_key')
+    await send_ad_post(post.get('post'), message.from_user.id)
 
 
 async def send_all_saved_messages_sequentially(user_id: str):

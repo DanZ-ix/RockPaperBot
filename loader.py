@@ -26,6 +26,7 @@ client = MongoClient(MONGO_URI)
 db = client[DATABASE_NAME]
 users_collection = db.users
 posts_collection = db.posts
+saved_messages_collection = db.saved_messages
 admin_collection = db.admin
 messages_collection = db.messages
 game_choices_collection = db.choices
@@ -56,7 +57,9 @@ DEFAULT_MESSAGES = {
     'double_offer': 'Подпишитесь на наш канал и удвойте свой заработок!',
     'channel_link': 'https://t.me/your_channel',
     'no_games_left': 'Больше нельзя играть сегодня, приходи завтра',
-    'lets_play': 'Отлично! Давайте сыграем в камень-ножницы-бумага!\nПобедишь, получишь вакансию'
+    'lets_play': 'Отлично! Давайте сыграем в камень-ножницы-бумага!\nПобедишь, получишь вакансию',
+    'first_const_button': 'Удвой свой заработок',
+    'second_const_button': 'Доступ к быстрому VPN'
 }
 
 rock = game_choices_collection.find_one({"name": "rock"}).get("value")

@@ -1,7 +1,8 @@
 import logging
 import asyncio
 
-from loader import messages_collection, admin_collection, users_collection, posts_collection, DEFAULT_MESSAGES, bot
+from loader import messages_collection, admin_collection, users_collection, posts_collection, DEFAULT_MESSAGES, bot, \
+    saved_messages_collection
 from datetime import datetime, timedelta
 
 
@@ -97,6 +98,10 @@ def save_ad_post(message_data):
 
 def get_all_ad_posts():
     return list(posts_collection.find().sort('created_at', -1))
+
+
+def get_post_by_key(key):
+    return saved_messages_collection.find_one({'key': key})
 
 
 def clear_posts_sent():
